@@ -1,5 +1,8 @@
 name: Delete All Releases and Tags
 
+permissions:
+  contents: write   # <---- BUNU EKLEMEZSE 403 VERİR
+
 on:
   workflow_dispatch:
     inputs:
@@ -13,7 +16,7 @@ jobs:
     if: ${{ github.event.inputs.confirm == 'YES' }}
     runs-on: ubuntu-latest
     env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # GH CLI için zorunlu
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Delete all releases
@@ -43,10 +46,8 @@ jobs:
             tag=${ref#refs/tags/}
             echo "Deleting tag: $tag"
 
-            # GitHub API reference deletion
             gh api --method DELETE repos/${{ github.repository }}/git/refs/tags/$tag || true
 
-            # Remote tag deletion fallback
             git init
             git remote add origin "https://github.com/${{ github.repository }}"
             git push --delete origin "$tag" || true
