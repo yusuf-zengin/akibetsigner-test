@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       confirm:
-        description: "TÜM RELEASE ve TAG'LER SİLİNECEK! Devam etmek için 'YES' yaz."
+        description: "TÜM RELEASE ve TAG'LER SİLİNECEK! Devam için 'YES' yaz."
         required: true
         default: "NO"
 
@@ -12,12 +12,18 @@ jobs:
   delete_all:
     if: ${{ github.event.inputs.confirm == 'YES' }}
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # GH CLI için zorunlu
 
     steps:
-      - name: Delete all releases via API
+      - name: Delete all releases
         run: |
           echo "Fetching releases..."
           releases=$(gh api repos/${{ github.repository }}/releases --jq '.[].id')
+
+          if [ -z "$releases" ]; then
+            echo "No releases found."
+          fi
 
           for id in $releases; do
             echo "Deleting release ID: $id"
@@ -29,14 +35,19 @@ jobs:
           echo "Fetching tags..."
           tags=$(gh api repos/${{ github.repository }}/git/refs/tags --jq '.[].ref' 2>/dev/null)
 
+          if [ -z "$tags" ]; then
+            echo "No tags found."
+          fi
+
           for ref in $tags; do
-            tag_name=${ref#refs/tags/}
+            tag=${ref#refs/tags/}
+            echo "Deleting tag: $tag"
 
-            echo "Deleting tag: $tag_name"
+            # GitHub API reference deletion
+            gh api --method DELETE repos/${{ github.repository }}/git/refs/tags/$tag || true
 
-            # Local tag (Git reference)
-            gh api --method DELETE repos/${{ github.repository }}/git/refs/tags/$tag_name || true
-
-            # Tag as release asset (some releases store tags)
-            git push --delete origin $tag_name || true
+            # Remote tag deletion fallback
+            git init
+            git remote add origin "https://github.com/${{ github.repository }}"
+            git push --delete origin "$tag" || true
           done
