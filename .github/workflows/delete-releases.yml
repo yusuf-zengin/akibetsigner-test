@@ -1,7 +1,7 @@
 name: Delete All Releases and Tags
 
 permissions:
-  contents: write   # <---- BUNU EKLEMEZSE 403 VERİR
+  contents: write   # Release & tag silmek için zorunlu
 
 on:
   workflow_dispatch:
@@ -24,31 +24,18 @@ jobs:
           echo "Fetching releases..."
           releases=$(gh api repos/${{ github.repository }}/releases --jq '.[].id')
 
-          if [ -z "$releases" ]; then
-            echo "No releases found."
-          fi
-
           for id in $releases; do
             echo "Deleting release ID: $id"
             gh api --method DELETE repos/${{ github.repository }}/releases/$id
           done
 
-      - name: Delete all tags
+      - name: Delete all tags (API only)
         run: |
           echo "Fetching tags..."
           tags=$(gh api repos/${{ github.repository }}/git/refs/tags --jq '.[].ref' 2>/dev/null)
 
-          if [ -z "$tags" ]; then
-            echo "No tags found."
-          fi
-
           for ref in $tags; do
             tag=${ref#refs/tags/}
             echo "Deleting tag: $tag"
-
             gh api --method DELETE repos/${{ github.repository }}/git/refs/tags/$tag || true
-
-            git init
-            git remote add origin "https://github.com/${{ github.repository }}"
-            git push --delete origin "$tag" || true
           done
