@@ -7,13 +7,14 @@ on:
   workflow_dispatch:
     inputs:
       confirm:
-        description: "TÜM RELEASE ve TAG'LER SİLİNECEK! Devam için 'YES' yaz."
+        description: "TÜM RELEASE ve TAG'LER SİLİNECEK!"
+        type: boolean
         required: true
-        default: "NO"
+        default: false
 
 jobs:
   delete_all:
-    if: ${{ github.event.inputs.confirm == 'YES' }}
+    if: ${{ github.event.inputs.confirm == true }}
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
