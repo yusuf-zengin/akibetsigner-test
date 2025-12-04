@@ -14,7 +14,7 @@ on:
 
 jobs:
   delete_all:
-    if: ${{ github.event.inputs.confirm == true }}
+    if: ${{ github.event.inputs.confirm == 'true' }}
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
